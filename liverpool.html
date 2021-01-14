@@ -1,0 +1,697 @@
+<html>
+<head>
+    <title>Liverpool FC</title>
+    <link href="main.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+    
+<div id="subs">
+    <div id="subs-container">
+        <div class="subs-divs" id="subs-div-1"></div>
+        <div class="subs-divs" id="subs-div-2"></div>
+        <div class="subs-divs" id="subs-div-3"></div>
+        <p id="arrowDown">&#x21EE;</p>
+    </div>
+
+
+    <div id="manager-container">
+        <p id="arrowUp">&#x21EE;</p>
+        <img id="manager-img" src="Images/rating.jpg" />
+    </div>
+</div>
+
+<div id="container">
+    <img id="pitch" src="Images/pitch.jpg" />
+
+    <div class="scroller" id="subsDiv">
+        <img id="subsArrows" src="Images/subsArrows.jpg" alt="Meni">
+    </div>
+    <div class="scroller" id="formDiv">
+        <img id="form" src="Images/meni.png" alt="Meni">
+        <p id="currentFormation"></p>
+    </div>
+
+    <div class="scroller" id="arrowsDiv">
+        <img id="up" src="Images/arrow.png" alt="Up"></img>
+        <img id="down" src="Images/arrow.png" alt="Down"></img>
+    </div>
+
+    <div id="goalkeeper">
+        <canvas id="goalkeeperChoices" class="circle" width="150" height="150"></canvas>
+    </div>
+    <div id="formation">
+
+    </div>
+</div>
+
+
+<script  src="https://code.jquery.com/jquery-3.5.1.js"  integrity="sha256-QWo7LDvxbWT2tbbQ97B53yJnYU3WhH/C8ycbRAkjPDc="  crossorigin="anonymous"></script>
+<script>
+
+    $("#manager-img").on("click", function () {
+        setTimeout(() => {
+            RemoveBarDiv();
+        }, 100);
+        this.style.border = "4px solid yellow";
+        RatePlayer(manager[0]);
+    });
+
+    $("#arrowDown").on("click", function(){
+        $("#subs").scrollTop(screen.height);
+    });
+
+    $("#arrowUp").on("click", function(){
+        $("#subs").scrollTop(0);
+    });
+
+    $(".subs-divs").on("click", function(){
+        ShowBar(this.id, true);
+    });
+
+    $("#goalkeeper").on("click", function(){
+        ShowBar(this.id);
+    });
+
+    $("#form").on("click", function(){
+        var created = document.getElementById("formationOptionsDiv");
+        if(created != null)
+            created.remove();
+        else{
+            var div = document.createElement("div");
+            div.id = "formationOptionsDiv"
+            div.className = "scroller";
+            div.style.right = "150px";
+            div.style.top = "15%";
+            div.style.width = "150px";
+            div.style.height = "150px";
+            div.style.scrollBehavior = "smooth";
+            div.style.backgroundColor = "white";
+            setTimeout(function (){
+                div.remove();
+            }, 7000);
+            document.getElementById("container").appendChild(div);
+
+            AddFormations(div);
+        }
+    });
+
+    function AddFormations(div){    
+
+        var formacije = ["4 3 3", "4 4 2", "3 5 2", "5 4 1", "4 3 2 1"];
+        formacije.forEach(e => {
+            var button = document.createElement("button");
+            button.innerText = e;
+            button.style.display = "absolute";            
+            button.style.textAlign = "center";
+            button.style.width = "100%"
+            button.style.height = "30px";
+            button.style.border = "0px";
+            button.style.top = "0px";
+            button.style.left = "0px";
+            button.style.cursor = "pointer";
+            button.style.backgroundColor = "white";
+            button.addEventListener("click", function (){
+                var f = document.getElementById("formation");
+                var child = f.lastElementChild;  
+                while (child) { 
+                    f.removeChild(child); 
+                    child = f.lastElementChild;
+                }
+                $("#formationOptionsDiv").remove();
+                ChangeFormation(button.innerText.split(" "));
+            });
+            button.addEventListener("mouseover", function(){
+                button.style.backgroundColor = "blue";
+            });
+            button.addEventListener("mouseleave", function(){
+                button.style.backgroundColor = "white";
+            });
+            div.appendChild(button);
+        });
+    }
+
+    function ChangeFormation(formation){
+        var f = "";
+        var rows = formation.length;
+        var columns = 0;
+        formation.forEach(e => {
+            if(e > columns)
+                columns = e;
+        });
+
+        var w = $("#pitch").width();
+        var h = $("#pitch").height();
+        
+        var counter = 0;
+        for (let i = 0; i < rows; i++) {
+            var row = document.createElement("div");
+            row.style.height = (h / rows) + "px";
+            row.style.width = "100%";            
+            row.style.zIndex = "1000";
+            row.style.display = "flex";
+            row.style.flexDirection = "row";
+            row.style.position = "absolute";
+            row.style.top = i * (h / rows) + "px";
+            f += formation[i] + " ";
+            for (let j = 0; j < formation[i]; j++) {
+                var column = document.createElement("div");
+                column.id = counter;  
+                counter++;
+                column.style.position = "absolute";
+                column.style.height = "100%";
+                column.style.width = (w / formation[i]) + "px";
+                column.style.marginRight = "a";
+                column.style.display = "flex";
+                column.style.flexDirection = "column";
+                column.style.alignItems = "center";
+                column.style.justifyContent = "center";
+                column.innerHTML = "<canvas class='circle' width='150' height='150'></canvas>";
+                column.addEventListener("click", function(){
+                    ShowBar(this.id);
+                });               
+                column.style.textAlign = "center";
+                column.style.zIndex = "5000";
+                column.style.left = j * (w / formation[i]) + "px";
+                row.appendChild(column);
+            }
+
+            document.getElementById("formation").appendChild(row);
+        }
+        $("#goalkeeper").css("display", "block");
+        draw();
+        $("#currentFormation").text(f);
+    }
+    
+    function RemoveBarDiv(){
+        var d = document.getElementById("barDiv");
+        var x = document.getElementById("XId");
+        if (d != null)
+            d.remove();
+        if(x != null)
+            x.remove();
+    }
+
+    function ShowBar(id, bothPlayersAndGK = false) {
+        RemoveBarDiv();
+        var div = document.createElement("div");
+        div.id = "barDiv"
+        div.style.position = "fixed";
+        div.style.padding = "10px";
+        div.style.width = "100%";
+        div.style.height = "150px";
+        div.style.backgroundColor = "white";
+        div.style.bottom = "0";
+        div.style.zIndex = "5000";
+        div.style.overflowY = "auto";
+
+        var x = document.createElement("button");
+        x.innerText = "X";
+        x.id = "XId"
+        x.style.backgroundColor = "red";
+        x.style.width = "50px";
+        x.style.height = "50px";
+        x.style.position = "fixed";
+        x.style.bottom = "3px";
+        x.style.right = "3px";
+        x.style.zIndex = "5001";
+        x.style.borderRadius = "50%";
+        x.style.color = "white";
+        x.addEventListener("click", function(){
+            setTimeout(() => {
+                RemoveBarDiv();
+            }, 100); 
+            // document.getElementById("barDiv").remove();
+            // document.getElementById("XId").remove();
+        });
+        document.body.appendChild(div);
+        document.body.appendChild(x);
+        if (id == "goalkeeper")
+            LoadPlayers(id, true, bothPlayersAndGK);
+        else
+            LoadPlayers(id, false, bothPlayersAndGK);
+            
+    }
+
+    
+    function CreatePlayersCards(id, e){
+
+        var div = document.createElement("div");
+            div.style.cursor = "pointer";
+            div.style.width = "200px";
+            div.style.height = "100%";
+            div.style.border = "1px solid black";
+            div.style.borderBottom = "3px";
+            div.style.borderRadius = "15px";
+            div.style.display = "flex";
+            div.style.flexDirection = "column";
+            div.style.padding = "0px";
+            div.style.userSelect = "none";
+            div.style.float = "left";
+            div.style.margin = "1px";
+            div.addEventListener("mouseover", function(){
+                div.style.backgroundColor = "gray";
+            });
+            div.addEventListener("mouseleave", function(){
+                div.style.backgroundColor = "white";
+            });
+            div.id = "card_" + id + "_" + e[0];
+            div.addEventListener("click", function (){
+                var cId = this.id.split("_");
+                var parent = document.getElementById(cId[1]);
+                parent.innerHTML = "";
+                
+                var plr = getPlayer(cId[2]);
+
+                var img = document.createElement("img");
+                img.src = plr[3];
+                img.style.width = "150px";
+                img.style.height = "150px";
+                var p = document.createElement("p");
+                p.innerText = plr[2]; 
+                p.style.textTransform = "uppercase";
+                p.style.color = "white";
+                var rate = document.createElement("img");
+                rate.id = plr[0]; // player id
+                rate.src = "Images/rating.jpg";
+
+                //rate.style.position = "absolute";
+                // rate.style.float = "left";
+
+                // if(parseInt(cId[2].slice(1, 3)) < 3) {
+                //     rate.style.right = img.style.right - 10 + "px";
+                //     rate.style.top = 10;
+                // }  
+                // else {
+                //     rate.style.right = img.style.right;
+                //     rate.style.top = img.style.top;
+                // }
+                // rate.style.marginLeft = "130px";
+                // rate.style.marginBottom = "130px";
+                rate.style.borderRadius = "50%";
+                rate.style.width = "50px";
+                rate.style.height = "50px";
+                rate.style.cursor = "pointer";
+                rate.style.zIndex = "4000";
+                rate.style.border = "4px solid red";
+                rate.addEventListener("click", function(){
+                    setTimeout(() => {
+                        RemoveBarDiv();
+                    }, 100); 
+                    rate.style.border = "4px solid yellow";
+                    RatePlayer(this.id);                   
+                });
+
+                parent.appendChild(img);
+                parent.appendChild(p);
+                parent.appendChild(rate);
+            });
+
+
+            var img = document.createElement("img");
+            img.src = e[3];
+            img.alt = e[2];
+            img.style.width = "auto";
+            img.style.height = "60%";
+            img.style.margin = "0px";
+            img.style.marginLeft = "auto";
+            img.style.marginRight = "auto";
+
+
+            var p = document.createElement("p");
+            p.style.bottom = "0";
+            p.style.textAlign = "center";
+            p.innerText = e[2] + "\n" + e[1];
+
+            div.appendChild(img);
+            div.appendChild(p)
+
+            document.getElementById("barDiv").appendChild(div);
+    }
+
+    function LoadPlayers(id, keeper, both = false) {
+        document.getElementById("barDiv").innerHTML = "";
+        var pls
+        if(!both){
+            if(keeper == true)
+                pls = goalkeepers;
+            else
+                pls = players;
+            pls.forEach(e => CreatePlayersCards(id, e));
+        }
+        else{
+            goalkeepers.forEach(e => CreatePlayersCards(id, e));
+            players.forEach(e => CreatePlayersCards(id, e));
+        }
+    }
+
+   
+    
+
+    $("#subsArrows").on("click", function(){
+        if($("#subs").css("height") == "0px"){
+            $("#subs").css("height", "100%");
+            $("#subsArrows").css("border", "3px solid red");
+            $("#subs").scrollTop(0);
+        }
+        else{
+            $("#subs").css("height", "0px");
+            $("#subsArrows").css("border", "none");
+        }
+        setTimeout(() => {
+            RemoveBarDiv(); 
+        }, 100);
+    });
+
+
+    $("#up").on("click", function(){
+        var dif = $("#container").scrollTop();
+        var h =  $("#pitch").height();
+        if(dif > 0)
+        {
+            if(dif <= h / 2)
+                dif = 0;
+            else 
+                dif = h / 2 - ($("#container").height() / 2);
+        }
+        $("#container").scrollTop(dif);
+    });
+
+    $("#down").on("click", function(){
+        var h =  $("#pitch").height();
+        var dif = $("#container").scrollTop() + $("#container").height();
+        if(dif < h)
+        {
+            if(dif >= h / 2)
+                dif = h;
+            else 
+                dif = h / 2 - ($("#container").height() / 2);
+        }
+        $("#container").scrollTop(dif);
+    });
+
+    function draw()
+    {
+        var canvasElements = document.getElementsByClassName('circle');
+        for (let i = 0; i < canvasElements.length; i++) {
+            const c = canvasElements[i];
+            if (c.getContext)
+            {
+                var ctx = c.getContext('2d'); 
+                var X = c.width / 2;
+                var Y = c.height / 2;
+                var R = 45;
+                ctx.beginPath();
+                ctx.arc(X, Y, R, 0, 2 * Math.PI, false);
+                ctx.lineWidth = 3;
+                ctx.strokeStyle = '#FF0000';
+                ctx.stroke();
+            }
+        }
+
+     
+    }
+
+    function getPlayer(Id){
+        var p;
+        goalkeepers.forEach(e => {
+            if(e[0] === Id)
+                p = e;
+        });
+        players.forEach(e => {
+            if(e[0] === Id)
+                p = e;
+        });
+        if(manager[0] == Id)
+            p = manager;
+        return p;
+        }
+
+    function RatePlayer(playerid) {
+        var div = document.createElement("div");
+        div.style.position = "fixed";
+        div.style.width = "100%";
+        div.style.height = "100%";
+        div.style.top = "0";
+        div.style.left = "0";
+        div.style.backgroundColor = "rgba(0, 0, 0, 0.3)";
+        div.style.zIndex = "3000";
+        
+        var frame = document.createElement("div");
+        frame.style.position = "absolute";
+        frame.style.marginLeft = "10%";
+        frame.style.marginTop = "5%";
+        frame.style.width = "80%";
+        frame.style.height = "70%";
+        frame.style.backgroundColor = "white";
+        frame.style.zIndex = "4000";
+        frame.style.border = "1px solid red";
+        frame.style.borderRadius = "10px";
+        frame.style.overflow = "hidden";
+        frame.style.padding = "20px";
+        frame.style.display = "flex";
+        frame.style.flexDirection = "row";
+
+        var x = document.createElement("button");
+        x.innerText = "X";
+        x.style.backgroundColor = "red";
+        x.style.width = "50px";
+        x.style.height = "50px";
+        x.style.position = "absolute";
+        x.style.top = "3px";
+        x.style.right = "3px";
+        x.style.borderRadius = "50%";
+        x.style.color = "white";
+        x.style.cursor = "pointer";
+        x.style.zIndex = "100";
+        x.addEventListener("click", function () {
+            div.remove();
+        });
+
+        var player = getPlayer(playerid);
+
+        // left side
+        var infoDiv = document.createElement("div");
+        infoDiv.style.position = "relative";
+        infoDiv.style.display = "flex";
+        infoDiv.style.flexDirection = "column";
+        infoDiv.style.justifyContent = "center";
+        infoDiv.style.width = "300px";
+        infoDiv.style.height = "100%";
+        infoDiv.style.boxSizing = "border-box";
+        infoDiv.style.overflow = "hidden";
+        infoDiv.style.textAlign = "center";
+
+        var profilimg = document.createElement("img");
+        profilimg.src = player[3];
+        profilimg.style.width = "100%";
+        profilimg.style.height = "auto";
+        profilimg.style.display = "block";
+
+        var playername = document.createElement("h3"); playername.innerText = "(" + player[1] + ") " + player[2];
+        var avg = ((parseInt(player[4]) + parseInt(player[5])  + parseInt(player[6]) ) / 3).toFixed(2);
+        var avgrating = document.createElement("h2"); avgrating.innerText = avg; avgrating.id = "avgRateId";
+
+        infoDiv.appendChild(profilimg);
+        infoDiv.appendChild(playername);
+        infoDiv.appendChild(avgrating);
+        //
+
+        // right side
+        var ratingDiv = document.createElement("div");
+        ratingDiv.style.position = "relative";
+        ratingDiv.style.display = "flex";
+        ratingDiv.style.flexDirection = "row";
+        ratingDiv.style.justifyContent = "space-around";
+        ratingDiv.style.width = "100%";
+        ratingDiv.style.boxSizing = "border-box";
+        ratingDiv.style.overflow = "hidden";
+        ratingDiv.style.textAlign = "center";
+        ratingDiv.style.padding = "5px";
+
+        var pearson1 = document.createElement("div");
+        pearson1.style.display = "flex";
+        pearson1.style.flexDirection = "column";
+        pearson1.style.backgroundColor = "red";
+        pearson1.style.width = "30%";
+        pearson1.style.borderRadius = "10px";
+        pearson1.style.alignItems = "center";
+        
+        // inside pearson 1 block
+        var p1Img = document.createElement("img");
+        p1Img.src = "Images/kopish.jpg";
+        p1Img.style.width = "70%";
+        p1Img.style.height = "auto";
+        p1Img.style.display = "block";
+        p1Img.style.marginBottom = "10px";
+
+        var slider1 = document.createElement("input");
+        slider1.type = "range";
+        slider1.style.className = "slider";
+        slider1.min = "0";
+        slider1.max = "10";
+        slider1.value = parseInt(player[4]);
+        slider1.style.width = "90%";
+        slider1.addEventListener("change", function(){
+            sliderCounter1.innerText = this.value;
+            player[4] = this.value;
+            document.getElementById("avgRateId").innerText = ((parseInt(player[4]) + parseInt(player[5])  + parseInt(player[6]) ) / 3).toFixed(2);
+        });
+
+        var sliderCounter1 = document.createElement("h2");
+        sliderCounter1.style.color = "white";
+        sliderCounter1.innerText = slider1.value;
+
+        var name1 = document.createElement("h1");
+        name1.style.margin = "10%";
+        name1.style.color = "white";
+        name1.innerText = "Cullum";
+
+        pearson1.appendChild(p1Img);
+        pearson1.appendChild(slider1);
+        pearson1.appendChild(sliderCounter1);
+        pearson1.appendChild(name1);
+        //
+
+        var pearson2 = document.createElement("div");
+        pearson2.style.display = "flex";
+        pearson2.style.flexDirection = "column";
+        pearson2.style.backgroundColor = "blue";
+        pearson2.style.width = "30%";
+        pearson2.style.borderRadius = "10px";
+        pearson2.style.alignItems = "center";
+
+        // inside pearson 2 block
+        var p2Img = document.createElement("img");
+        p2Img.src = "Images/kopish.jpg";
+        p2Img.style.width = "70%";
+        p2Img.style.height = "auto";
+        p2Img.style.display = "block";
+        p2Img.style.marginBottom = "10px";
+
+        var slider2 = document.createElement("input");
+        slider2.type = "range";
+        slider2.style.className = "slider";
+        slider2.min = "0";
+        slider2.max = "10";
+        slider2.value = parseInt(player[5]);
+        slider2.style.width = "90%";
+        slider2.addEventListener("change", function(){
+            sliderCounter2.innerText = this.value;
+            player[5] = this.value;
+            document.getElementById("avgRateId").innerText = ((parseInt(player[4]) + parseInt(player[5])  + parseInt(player[6]) ) / 3).toFixed(2);
+        });
+
+        var sliderCounter2 = document.createElement("h2");
+        sliderCounter2.style.color = "white";
+        sliderCounter2.innerText = slider2.value;
+
+        var name2 = document.createElement("h1");
+        name2.style.margin = "10%";
+        name2.style.color = "white";
+        name2.innerText = "Matt";
+
+        pearson2.appendChild(p2Img);
+        pearson2.appendChild(slider2);
+        pearson2.appendChild(sliderCounter2);
+        pearson2.appendChild(name2);
+        //
+        
+        var pearson3 = document.createElement("div");
+        pearson3.style.display = "flex";
+        pearson3.style.flexDirection = "column";
+        pearson3.style.backgroundColor = "green";
+        pearson3.style.width = "30%";
+        pearson3.style.borderRadius = "10px";
+        pearson3.style.alignItems = "center";
+              
+        // inside pearson 3 block
+        var p3Img = document.createElement("img");
+        p3Img.src = "Images/kopish.jpg";
+        p3Img.style.width = "70%";
+        p3Img.style.height = "auto";
+        p3Img.style.display = "block";
+        p3Img.style.marginBottom = "10px";
+
+        var slider3 = document.createElement("input");
+        slider3.type = "range";
+        slider3.style.className = "slider";
+        slider3.min = "0";
+        slider3.max = "10";
+        slider3.value = parseInt(player[6]);
+        slider3.style.width = "90%";
+        slider3.addEventListener("change", function(){
+            sliderCounter3.innerText = this.value;
+            player[6] = this.value;
+            document.getElementById("avgRateId").innerText = ((parseInt(player[4]) + parseInt(player[5])  + parseInt(player[6]) ) / 3).toFixed(2);
+        });
+
+        var sliderCounter3 = document.createElement("h2");
+        sliderCounter3.style.color = "white";
+        sliderCounter3.innerText = slider3.value;
+
+        var name3 = document.createElement("h1");
+        name3.style.margin = "10%";
+        name3.style.color = "white";
+        name3.innerText = "Drifty";
+
+        pearson3.appendChild(p3Img);
+        pearson3.appendChild(slider3);
+        pearson3.appendChild(sliderCounter3);
+        pearson3.appendChild(name3);
+        //
+
+        ratingDiv.appendChild(pearson1);
+        ratingDiv.appendChild(pearson2);
+        ratingDiv.appendChild(pearson3);
+        //
+
+        frame.appendChild(x);
+        frame.appendChild(infoDiv);
+        frame.appendChild(ratingDiv);
+        div.appendChild(frame);
+        document.body.appendChild(div);
+    }
+
+    var manager = ["pM", "M", "Jurgen Klopp", "Players/Images/Klopp.png", "5", "5", "5"];
+    var goalkeepers = [
+        ["p0", "1", "Alison Becker", "Players/Images/Alisson.png", "5", "5", "5"],
+        ["p1", "62", "Caoimhin Keleher", "Players/Images/Kelleher.png", "5", "5", "5"],
+        ["p2", "13", "Adrian", "Players/Images/Adrian.png", "5", "5", "5"]
+    ];
+    var players = [
+        ["p3", "4", "Van Dijk", "Players/Images/VanDijk.png", "5", "5", "5"],
+        ["p4", "12", "Joseph Gomez", "Players/Images/Gomez.png", "5", "5", "5"],
+        ["p5", "32", "Joel Matip", "Players/Images/Matip.png", "5", "5", "5"],
+        ["p6", "47", "Nathaniel Philips", "Players/Images/NatPhilips.png", "5", "5", "5"],
+        ["p7", "26", "Andrew Robertson", "Players/Images/Robertson.png", "5", "5", "5"],
+        ["p8", "66", "Trent Alexander-Arnold", "Players/Images/Arnold.png", "5", "5", "5"],
+        ["p9", "76", "Neco Williams", "Players/Images/Williams.png", "5", "5", "5"],
+        ["p10", "46", "Rhys Williams", "Players/Images/Rhys.png", "5", "5", "5"],
+        ["p11", "21", "Konstantinos Tsimikas", "Players/Images/Tsimikas.png", "5", "5", "5"],
+        ["p12", "72", "Sepp Van den Berg", "Players/Images/VandenBerg.png", "5", "5", "5"],        
+        ["p13", "89", "Billy Koumetio", "Players/Images/Koumetio.png", "5", "5", "5"],
+        ["p14", "3", "Fabinho", "Players/Images/Fabinho.png", "5", "5", "5"],
+        ["p15", "5", "Georginio Wijnaldum", "Players/Images/Wijnaldum.png", "5", "5", "5"],
+        ["p16", "7", "James Milner", "Players/Images/Milner.png", "5", "5", "5"],
+        ["p17", "8", "Naby Keita", "Players/Images/Keita.png", "5", "5", "5"],
+        ["p18", "14", "Jordan Henderson", "Players/Images/Hendo.png", "5", "5", "5"],
+        ["p19", "15", "Alex Ox Chamberlain", "Players/Images/Ox.png", "5", "5", "5"],
+        ["p20", "17", "Curtis Jones", "Players/Images/Jones.png", "5", "5", "5"],
+        ["p21", "23", "Xherdan Shaqiri", "Players/Images/Shaq.png", "5", "5", "5"],
+        ["p22", "6", "Thiago", "Players/Images/Thiago.png", "5", "5", "5"],
+        ["p23", "9", "Roberto Firmino", "Players/Images/Firmino.png", "5", "5", "5"],
+        ["p24", "10", "Sadio Mane", "Players/Images/Mane.png", "5", "5", "5"],
+        ["p25", "11", "Mohamed Salah", "Players/Images/Salah.png", "5", "5", "5"],
+        ["p26", "18", "Takumi Minamino", "Players/Images/Minamino.png", "5", "5", "5"],
+        ["p27", "27", "Divock Origi", "Players/Images/Origi.png", "5", "5", "5"],     
+        ["p28", "20", "Diogo Jota", "Players/Images/Jota.png", "5", "5", "5"],
+        ["p29", "65", "Leighton Clarkson", "Players/Images/Clarkson.png", "5", "5", "5"],
+        ["p30", "64", "Jake Cain", "Players/Images/Cain.png", "5", "5", "5"]
+    ];
+
+    
+</script>
+
+
+</body>
+</html>
